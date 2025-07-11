@@ -224,18 +224,26 @@ paths:
                     type: string
                     description: 処理結果
                     example: "unsubscribed"
-                  removed:
-                    type: boolean
-                    description: 購読が削除されたかどうか
-                    example: true
+                  message:
+                    type: string
+                    description: 処理結果メッセージ
+                    example: "購読を解除しました"
                   total:
                     type: integer
                     description: 削除後の総購読数
                     example: 0
               example:
                 status: "unsubscribed"
-                removed: true
+                message: "購読を解除しました"
                 total: 0
+        "404":
+          description: 購読が見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "指定されたエンドポイントの購読が見つかりません"
         "500":
           description: サーバーエラー
           content:
