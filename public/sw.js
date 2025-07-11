@@ -40,6 +40,31 @@ self.addEventListener("notificationclick", function (event) {
   // 通知をクリックした時の処理
   event.waitUntil(
     clients.matchAll({ type: "window" }).then(function (clientList) {
+      const notificationData = event.notification.data || {};
+      const urlToOpen = notificationData.url || "/";
+
+      console.log("通知クリック時のデータ:", notificationData);
+
+      // カスタムアクションタイプに基づく処理
+      if (notificationData.actionType === "test-notification") {
+        // テスト通知用の特別な処理
+        console.log("テスト通知がクリックされました");
+
+        // 既存ウィンドウをフォーカス
+        for (let i = 0; i < clientList.length; i++) {
+          const client = clientList[i];
+          if (client.url.includes("/notification-test") && "focus" in client) {
+            return client.focus();
+          }
+        }
+
+        // 通知テストページを開く
+        if (clients.openWindow) {
+          return clients.openWindow("/notification-test");
+        }
+      }
+
+      // 通常の処理
       // 既に開いているウィンドウがあれば、それをフォーカス
       for (let i = 0; i < clientList.length; i++) {
         const client = clientList[i];
@@ -50,7 +75,6 @@ self.addEventListener("notificationclick", function (event) {
 
       // 開いているウィンドウがない場合は、新しいウィンドウを開く
       if (clients.openWindow) {
-        const urlToOpen = event.notification.data?.url || "/";
         return clients.openWindow(urlToOpen);
       }
     })

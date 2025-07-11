@@ -85,20 +85,63 @@ export default function NotificationTestPage() {
     }
 
     try {
+      // より詳細なデータを含む通知を作成
+      const notificationData = {
+        ...options.data,
+        actionType: "test-notification",
+        timestamp: Date.now(),
+        customMessage:
+          (options.data as Record<string, unknown>)?.customMessage ||
+          "これはテスト通知からのカスタムメッセージです",
+        redirectUrl:
+          (options.data as Record<string, unknown>)?.redirectUrl ||
+          "/notification-test",
+        shouldFocus:
+          (options.data as Record<string, unknown>)?.shouldFocus !== false,
+        shouldOpenNewTab:
+          (options.data as Record<string, unknown>)?.shouldOpenNewTab === true,
+      };
+
       const notification = new Notification(options.title, {
         body: options.body,
         icon: options.icon || undefined,
         badge: options.badge || undefined,
         tag: options.tag,
-        data: options.data,
+        data: notificationData,
         requireInteraction: options.requireInteraction,
         silent: options.silent,
       });
 
       notification.onclick = () => {
-        window.focus();
+        // 通知クリック時の詳細な処理
+        const data = notification.data;
+        console.log("通知クリック時のデータ:", data);
+
+        // カスタムデータに基づいて処理を分岐
+        if (data?.actionType === "test-notification") {
+          // アプリをフォーカス
+          window.focus();
+
+          // カスタムメッセージを表示
+          if (data.customMessage) {
+            setResult(`通知がクリックされました: ${data.customMessage}`);
+          }
+
+          // 特定のURLに遷移する場合
+          if (
+            data.redirectUrl &&
+            data.redirectUrl !== window.location.pathname
+          ) {
+            window.location.href = data.redirectUrl;
+          }
+
+          // 新しいタブを開く場合
+          if (data.shouldOpenNewTab) {
+            window.open(data.redirectUrl || "/", "_blank");
+          }
+        }
+
         notification.close();
-        setResult("通知がクリックされました");
       };
 
       notification.onclose = () => {
@@ -306,6 +349,112 @@ export default function NotificationTestPage() {
                   placeholder='{"key": "value"}'
                 />
               </div>
+
+              {/* クリック時の動作設定 */}
+              <div>
+                <h3 className="font-medium mb-2">クリック時の動作設定</h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      遷移先URL
+                    </label>
+                    <input
+                      type="text"
+                      value={
+                        ((options.data as Record<string, unknown>)
+                          ?.redirectUrl as string) || "/"
+                      }
+                      onChange={(e) => {
+                        const newData = {
+                          ...(options.data as Record<string, unknown>),
+                          redirectUrl: e.target.value,
+                        };
+                        handleOptionChange("data", newData);
+                        setCustomData(JSON.stringify(newData, null, 2));
+                      }}
+                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      placeholder="/"
+                    />
+                  </div>
+
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="shouldFocus"
+                        checked={
+                          ((options.data as Record<string, unknown>)
+                            ?.shouldFocus as boolean) !== false
+                        }
+                        onChange={(e) => {
+                          const newData = {
+                            ...(options.data as Record<string, unknown>),
+                            shouldFocus: e.target.checked,
+                          };
+                          handleOptionChange("data", newData);
+                          setCustomData(JSON.stringify(newData, null, 2));
+                        }}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <label
+                        htmlFor="shouldFocus"
+                        className="ml-2 text-sm text-gray-700"
+                      >
+                        ウィンドウをフォーカス
+                      </label>
+                    </div>
+
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="shouldOpenNewTab"
+                        checked={
+                          ((options.data as Record<string, unknown>)
+                            ?.shouldOpenNewTab as boolean) === true
+                        }
+                        onChange={(e) => {
+                          const newData = {
+                            ...(options.data as Record<string, unknown>),
+                            shouldOpenNewTab: e.target.checked,
+                          };
+                          handleOptionChange("data", newData);
+                          setCustomData(JSON.stringify(newData, null, 2));
+                        }}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <label
+                        htmlFor="shouldOpenNewTab"
+                        className="ml-2 text-sm text-gray-700"
+                      >
+                        新しいタブで開く
+                      </label>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      カスタムメッセージ
+                    </label>
+                    <input
+                      type="text"
+                      value={
+                        ((options.data as Record<string, unknown>)
+                          ?.customMessage as string) || ""
+                      }
+                      onChange={(e) => {
+                        const newData = {
+                          ...(options.data as Record<string, unknown>),
+                          customMessage: e.target.value,
+                        };
+                        handleOptionChange("data", newData);
+                        setCustomData(JSON.stringify(newData, null, 2));
+                      }}
+                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      placeholder="クリック時に表示されるメッセージ"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -335,6 +484,46 @@ export default function NotificationTestPage() {
                       <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mt-2">
                         {options.tag}
                       </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* クリック時の動作プレビュー */}
+                <div className="mt-3 pt-3 border-t border-gray-200">
+                  <h5 className="text-xs font-medium text-gray-700 mb-2">
+                    クリック時の動作:
+                  </h5>
+                  <div className="text-xs text-gray-600 space-y-1">
+                    <div>
+                      <span className="font-medium">遷移先:</span>{" "}
+                      {String(
+                        (options.data as Record<string, unknown>)
+                          ?.redirectUrl || "/"
+                      )}
+                    </div>
+                    <div>
+                      <span className="font-medium">フォーカス:</span>{" "}
+                      {(options.data as Record<string, unknown>)
+                        ?.shouldFocus !== false
+                        ? "有効"
+                        : "無効"}
+                    </div>
+                    <div>
+                      <span className="font-medium">新しいタブ:</span>{" "}
+                      {(options.data as Record<string, unknown>)
+                        ?.shouldOpenNewTab === true
+                        ? "有効"
+                        : "無効"}
+                    </div>
+                    {((options.data as Record<string, unknown>)
+                      ?.customMessage as string) && (
+                      <div>
+                        <span className="font-medium">メッセージ:</span>{" "}
+                        {String(
+                          (options.data as Record<string, unknown>)
+                            ?.customMessage || ""
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -378,6 +567,59 @@ export default function NotificationTestPage() {
             <li>通知をクリックするとイベントが記録されます</li>
             <li>「設定をリセット」でデフォルト値に戻せます</li>
           </ol>
+        </div>
+
+        {/* 通知クリック後の挙動について */}
+        <div className="bg-purple-50 rounded-lg p-6 mt-6">
+          <h2 className="text-xl font-semibold mb-4 text-purple-900">
+            通知クリック後の挙動
+          </h2>
+          <div className="space-y-4 text-sm text-purple-800">
+            <div>
+              <h3 className="font-medium mb-2">基本的な動作</h3>
+              <ul className="list-disc list-inside space-y-1">
+                <li>既存ウィンドウのフォーカス</li>
+                <li>新しいウィンドウ/タブを開く</li>
+                <li>特定のURLに遷移</li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="font-medium mb-2">
+                高度な動作（このページで実装済み）
+              </h3>
+              <ul className="list-disc list-inside space-y-1">
+                <li>カスタムデータに基づく処理分岐</li>
+                <li>アプリ内の状態変更</li>
+                <li>コンソールログの出力</li>
+                <li>結果メッセージの表示</li>
+                <li>条件付きURL遷移</li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="font-medium mb-2">さらに可能な動作</h3>
+              <ul className="list-disc list-inside space-y-1">
+                <li>データベースの更新</li>
+                <li>ローカルストレージの操作</li>
+                <li>他のAPIの呼び出し</li>
+                <li>通知アクション（複数ボタン）</li>
+                <li>アニメーションや視覚効果</li>
+                <li>音声再生</li>
+                <li>バックグラウンド処理の実行</li>
+              </ul>
+            </div>
+
+            <div className="bg-purple-100 p-3 rounded">
+              <p className="text-xs">
+                💡 <strong>ヒント:</strong>{" "}
+                通知のdataプロパティにカスタム情報を含めることで、
+                クリック時に様々な処理を実行できます。Service
+                Workerとクライアント側の両方で
+                イベントハンドラーを設定することで、より柔軟な動作を実現できます。
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
