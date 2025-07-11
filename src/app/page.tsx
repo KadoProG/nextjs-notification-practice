@@ -1,8 +1,8 @@
 "use client";
 
-import ValidNotificationButton from "@/components/ValidNotificationButton";
 import SendNotificationButton from "@/components/SendNotificationButton";
 import SubscriptionStatus from "@/components/SubscriptionStatus";
+import NotificationSettings from "@/components/NotificationSettings";
 import useNotificationPermission from "@/hooks/useNotificationPermission";
 
 const messages = {
@@ -33,13 +33,7 @@ export default function HomePage() {
         </div>
 
         {/* 通知設定 */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">通知設定</h2>
-          <p className="text-sm text-gray-600 mb-4">
-            プッシュ通知を受信するには、まず通知を有効にしてください。
-          </p>
-          <ValidNotificationButton />
-        </div>
+        <NotificationSettings />
 
         {/* 通知送信 */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">

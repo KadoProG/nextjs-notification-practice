@@ -6,7 +6,7 @@ self.addEventListener("push", function (event) {
     badge: data.badge || "/next.svg",
     tag: data.tag || "default",
     data: data.data || {},
-    requireInteraction: false,
+    requireInteraction: true, // ユーザーが明示的に閉じるまで表示
     silent: false,
     vibrate: [200, 100, 200],
     actions: [
@@ -20,6 +20,11 @@ self.addEventListener("push", function (event) {
         title: "閉じる",
       },
     ],
+    // 通知のスタイリングを改善
+    image: data.image,
+    timestamp: Date.now(),
+    // 通知の優先度を設定
+    priority: "high",
   };
 
   event.waitUntil(self.registration.showNotification(data.title, options));
@@ -54,4 +59,38 @@ self.addEventListener("notificationclick", function (event) {
 
 self.addEventListener("notificationclose", function (event) {
   console.log("通知が閉じられました:", event.notification.tag);
+});
+
+// フォアグラウンドでの通知表示を改善
+self.addEventListener("push", function (event) {
+  // フォアグラウンドでも通知を表示
+  if (event.data) {
+    const data = event.data.json();
+    const options = {
+      body: data.body,
+      icon: data.icon || "/next.svg",
+      badge: data.badge || "/next.svg",
+      tag: data.tag || "default",
+      data: data.data || {},
+      requireInteraction: true,
+      silent: false,
+      vibrate: [200, 100, 200],
+      actions: [
+        {
+          action: "open",
+          title: "開く",
+          icon: "/next.svg",
+        },
+        {
+          action: "close",
+          title: "閉じる",
+        },
+      ],
+      image: data.image,
+      timestamp: Date.now(),
+      priority: "high",
+    };
+
+    event.waitUntil(self.registration.showNotification(data.title, options));
+  }
 });

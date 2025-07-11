@@ -22,18 +22,38 @@ export async function POST() {
 
     webpush.setVapidDetails("mailto:you@example.com", publicKey, privateKey);
 
+    // より魅力的な通知データを作成
+    const currentTime = new Date();
     const payload = JSON.stringify({
-      title: "PWA通知テスト",
-      body: `これはテスト通知です。送信時刻: ${new Date().toLocaleString(
+      title: "🎉 新しい通知が届きました！",
+      body: `こんにちは！新しいメッセージがあります。\n受信時刻: ${currentTime.toLocaleString(
         "ja-JP"
       )}`,
       icon: "/next.svg",
       badge: "/next.svg",
-      tag: "test-notification",
+      image: "/globe.svg", // 画像を追加
+      tag: "new-notification",
       data: {
         url: "/",
-        timestamp: Date.now(),
+        timestamp: currentTime.getTime(),
+        type: "info",
+        priority: "high",
       },
+      // 通知のスタイリング情報
+      requireInteraction: true,
+      silent: false,
+      vibrate: [200, 100, 200],
+      actions: [
+        {
+          action: "open",
+          title: "開く",
+          icon: "/next.svg",
+        },
+        {
+          action: "close",
+          title: "閉じる",
+        },
+      ],
     });
 
     const results = await Promise.allSettled(
