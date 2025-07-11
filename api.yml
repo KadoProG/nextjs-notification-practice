@@ -1,0 +1,375 @@
+openapi: 3.0.3
+info:
+  title: PWA Push Notification API
+  description: PWA プッシュ通知機能で使用される API エンドポイントの詳細仕様
+  version: 1.0.0
+  contact:
+    name: API Support
+servers:
+  - url: http://localhost:3000/api/push
+    description: Development server
+  - url: https://your-domain.com/api/push
+    description: Production server
+
+paths:
+  /subscribe:
+    get:
+      tags:
+        - Subscriptions
+      summary: 購読状況確認
+      description: 現在の購読状況を取得します
+      operationId: getSubscriptions
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    description: 現在の総購読数
+                    example: 1
+                  subscriptions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        endpoint:
+                          type: string
+                          description: プッシュサービスのエンドポイント URL
+                          example: "https://fcm.googleapis.com/fcm/send/..."
+                    description: 購読情報の配列
+              example:
+                total: 1
+                subscriptions:
+                  - endpoint: "https://fcm.googleapis.com/fcm/send/..."
+        "500":
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    post:
+      tags:
+        - Subscriptions
+      summary: 購読登録
+      description: プッシュ通知の購読を登録します
+      operationId: subscribe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - endpoint
+                - keys
+              properties:
+                endpoint:
+                  type: string
+                  description: プッシュサービスのエンドポイント URL
+                  example: "https://fcm.googleapis.com/fcm/send/..."
+                keys:
+                  type: object
+                  required:
+                    - p256dh
+                    - auth
+                  properties:
+                    p256dh:
+                      type: string
+                      description: P-256 ECDH 公開鍵（Base64 エンコード）
+                      example: "base64-encoded-p256dh-key"
+                    auth:
+                      type: string
+                      description: 認証シークレット（Base64 エンコード）
+                      example: "base64-encoded-auth-key"
+            example:
+              endpoint: "https://fcm.googleapis.com/fcm/send/..."
+              keys:
+                p256dh: "base64-encoded-p256dh-key"
+                auth: "base64-encoded-auth-key"
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    description: 処理結果
+                    example: "subscribed"
+                  total:
+                    type: integer
+                    description: 現在の総購読数
+                    example: 1
+                  isNew:
+                    type: boolean
+                    description: 新規購読かどうか
+                    example: true
+              example:
+                status: "subscribed"
+                total: 1
+                isNew: true
+        "500":
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /send:
+    post:
+      tags:
+        - Notifications
+      summary: 通知送信
+      description: 登録済みの購読者にプッシュ通知を送信します
+      operationId: sendNotification
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    description: 処理結果
+                    example: "sent"
+                  total:
+                    type: integer
+                    description: 送信対象の総数
+                    example: 1
+                  successful:
+                    type: integer
+                    description: 送信成功数
+                    example: 1
+                  failed:
+                    type: integer
+                    description: 送信失敗数
+                    example: 0
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        success:
+                          type: boolean
+                          description: 送信成功フラグ
+                          example: true
+                        index:
+                          type: integer
+                          description: 送信インデックス
+                          example: 0
+                    description: 各送信の結果詳細
+              example:
+                status: "sent"
+                total: 1
+                successful: 1
+                failed: 0
+                results:
+                  - success: true
+                    index: 0
+        "400":
+          description: リクエストエラー
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "登録された通知購読者がいません。まず通知を有効にしてください。"
+        "500":
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /unsubscribe:
+    post:
+      tags:
+        - Subscriptions
+      summary: 購読解除
+      description: 指定されたエンドポイントの購読を解除します
+      operationId: unsubscribe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - endpoint
+              properties:
+                endpoint:
+                  type: string
+                  description: 解除する購読のエンドポイント URL
+                  example: "https://fcm.googleapis.com/fcm/send/..."
+            example:
+              endpoint: "https://fcm.googleapis.com/fcm/send/..."
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    description: 処理結果
+                    example: "unsubscribed"
+                  removed:
+                    type: boolean
+                    description: 購読が削除されたかどうか
+                    example: true
+                  total:
+                    type: integer
+                    description: 削除後の総購読数
+                    example: 0
+              example:
+                status: "unsubscribed"
+                removed: true
+                total: 0
+        "500":
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /vapid:
+    get:
+      tags:
+        - VAPID
+      summary: VAPID 鍵取得
+      description: VAPID 公開鍵を取得します
+      operationId: getVapidKey
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  publicKey:
+                    type: string
+                    description: VAPID 公開鍵（Base64 エンコード）
+                    example: "base64-encoded-public-key"
+              example:
+                publicKey: "base64-encoded-public-key"
+
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: エラーメッセージ
+          example: "通知購読の処理中にエラーが発生しました"
+      required:
+        - error
+
+    NotificationPayload:
+      type: object
+      description: 送信される通知のペイロード形式
+      properties:
+        title:
+          type: string
+          description: 通知タイトル
+          example: "🎉 新しい通知が届きました！"
+        body:
+          type: string
+          description: 通知本文
+          example: "こんにちは！新しいメッセージがあります。\n受信時刻: 2024/12/19 15:30:45"
+        icon:
+          type: string
+          description: 通知アイコン
+          example: "/next.svg"
+        badge:
+          type: string
+          description: 通知バッジ
+          example: "/next.svg"
+        image:
+          type: string
+          description: 通知画像
+          example: "/globe.svg"
+        tag:
+          type: string
+          description: 通知タグ
+          example: "new-notification"
+        data:
+          type: object
+          properties:
+            url:
+              type: string
+              description: クリック時の遷移先URL
+              example: "/"
+            timestamp:
+              type: integer
+              description: タイムスタンプ
+              example: 1702971045000
+            type:
+              type: string
+              description: 通知タイプ
+              example: "info"
+            priority:
+              type: string
+              description: 優先度
+              example: "high"
+        requireInteraction:
+          type: boolean
+          description: ユーザー操作が必要かどうか
+          example: true
+        silent:
+          type: boolean
+          description: サイレント通知かどうか
+          example: false
+        vibrate:
+          type: array
+          items:
+            type: integer
+          description: バイブレーションパターン
+          example: [200, 100, 200]
+        actions:
+          type: array
+          items:
+            type: object
+            properties:
+              action:
+                type: string
+                description: アクション識別子
+                example: "open"
+              title:
+                type: string
+                description: アクションタイトル
+                example: "開く"
+              icon:
+                type: string
+                description: アクションアイコン
+                example: "/next.svg"
+          description: 通知アクション
+          example:
+            - action: "open"
+              title: "開く"
+              icon: "/next.svg"
+            - action: "close"
+              title: "閉じる"
+
+tags:
+  - name: Subscriptions
+    description: 購読関連の操作
+  - name: Notifications
+    description: 通知送信関連の操作
+  - name: VAPID
+    description: VAPID鍵関連の操作
+
+security:
+  - {} # 現在の実装では認証不要
