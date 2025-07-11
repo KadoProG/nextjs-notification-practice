@@ -4,6 +4,7 @@ import SendNotificationButton from "@/components/SendNotificationButton";
 import SubscriptionStatus from "@/components/SubscriptionStatus";
 import NotificationSettings from "@/components/NotificationSettings";
 import useNotificationPermission from "@/hooks/useNotificationPermission";
+import Link from "next/link";
 
 const messages = {
   default: "通知の許可状態が未設定です",
@@ -56,6 +57,24 @@ export default function HomePage() {
             <li>通知が表示されることを確認</li>
             <li>通知をクリックするとアプリが開きます</li>
           </ol>
+        </div>
+
+        {/* 追加ツール */}
+        <div className="bg-green-50 rounded-lg p-6 mt-6">
+          <h2 className="text-xl font-semibold mb-4 text-green-900">
+            追加ツール
+          </h2>
+          <div className="space-y-2 text-sm text-green-800">
+            <p>
+              <Link
+                href="/notification-test"
+                className="text-green-600 hover:text-green-800 underline font-medium"
+              >
+                Notification パラメータテストページ
+              </Link>
+              で様々な通知オプションを試すことができます。
+            </p>
+          </div>
         </div>
       </div>
     </div>
